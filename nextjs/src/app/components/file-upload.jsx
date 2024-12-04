@@ -9,10 +9,16 @@ export default function FileUpload({ onFileUpload }) {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
-      onFileUpload(file);
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setFileName(
+        Array.from(files)
+          .map((file) => file.name)
+          .join(", ")
+      );
+      onFileUpload(files);
+    } else {
+      setFileName(null);
     }
   };
 
@@ -27,6 +33,7 @@ export default function FileUpload({ onFileUpload }) {
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".pdf,.docx"
+        multiple
         style={{ display: "none" }}
       />
       <Button

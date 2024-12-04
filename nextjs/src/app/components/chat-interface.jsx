@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import FileUpload from "./file-upload";
 import JobList from "./job-list";
 import { Send } from "lucide-react";
+import UploadedFilePreview from "./uploaded-file-preview";
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState([]);
@@ -14,6 +15,7 @@ export default function ChatInterface() {
   const [isConversationStarted, setIsConversationStarted] = useState(false);
   const [showJobList, setShowJobList] = useState(false);
   const [jobs, setJobs] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]); // Initialize as an empty array
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -30,6 +32,13 @@ export default function ChatInterface() {
       ]);
       setInputMessage("");
       setIsConversationStarted(true);
+
+      // Send the message and uploaded files to the backend
+      if (uploadedFiles.length > 0) {
+        // Implement backend logic to handle the file data
+        console.log("Sending files:", uploadedFiles);
+      }
+
       // Simulate AI response
       setTimeout(() => {
         if (!isConversationStarted) {
@@ -53,56 +62,68 @@ export default function ChatInterface() {
     }
   };
 
-  const handleFileUpload = (file) => {
-    setMessages((prev) => [
-      ...prev,
-      { text: `Uploaded file: ${file.name}`, isUser: true },
-    ]);
-    setIsConversationStarted(true);
-    // Simulate AI processing the resume and fetching job listings
-    setTimeout(() => {
+  const handleFileUpload = (files) => {
+    setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
+
+    if (isConversationStarted) {
+      setMessages((prev) => [
+        ...prev,
+        { text: `Uploaded ${files.length} file(s)`, isUser: true },
+      ]);
+
+      // Simulate AI processing the resume and fetching job listings
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "I've analyzed your resume and found some suitable job opportunities. Here's a ranked list of jobs based on your skills and experience:",
+            isUser: false,
+          },
+        ]);
+        setShowJobList(true);
+        // Simulated job data
+        setJobs([
+          {
+            id: "1",
+            title: "Software Engineer",
+            company: "Tech Corp",
+            score: 95,
+          },
+          {
+            id: "2",
+            title: "Data Analyst",
+            company: "Data Insights Inc",
+            score: 88,
+          },
+          {
+            id: "3",
+            title: "UX Designer",
+            company: "Creative Solutions",
+            score: 82,
+          },
+          {
+            id: "4",
+            title: "Product Manager",
+            company: "Innovate Co",
+            score: 79,
+          },
+          {
+            id: "5",
+            title: "Frontend Developer",
+            company: "Web Wizards",
+            score: 75,
+          },
+        ]);
+      }, 2000);
+    } else {
       setMessages((prev) => [
         ...prev,
         {
-          text: "I've analyzed your resume and found some suitable job opportunities. Here's a ranked list of jobs based on your skills and experience:",
+          text: `${files.length} file(s) uploaded. Please start the conversation to proceed.`,
           isUser: false,
         },
       ]);
-      setShowJobList(true);
-      // Simulated job data
-      setJobs([
-        {
-          id: "1",
-          title: "Software Engineer",
-          company: "Tech Corp",
-          score: 95,
-        },
-        {
-          id: "2",
-          title: "Data Analyst",
-          company: "Data Insights Inc",
-          score: 88,
-        },
-        {
-          id: "3",
-          title: "UX Designer",
-          company: "Creative Solutions",
-          score: 82,
-        },
-        {
-          id: "4",
-          title: "Product Manager",
-          company: "Innovate Co",
-          score: 79,
-        },
-        {
-          id: "5",
-          title: "Frontend Developer",
-          company: "Web Wizards",
-          score: 75,
-        },
-      ]);
-    }, 2000);
+    }
   };
 
   return (
@@ -135,9 +156,18 @@ export default function ChatInterface() {
         }`}
       >
         {!isConversationStarted && (
-          <h1 className="text-center text-4xl mb-8 font-bold text-gray-800">
-            Find your dream job in seconds
-          </h1>
+          <>
+            <h1
+              className={`text-center text-4xl font-bold text-gray-800 ${
+                uploadedFiles.length > 0 ? "mb-2" : "mb-8"
+              }`}
+            >
+              Find your dream job in seconds
+            </h1>
+            {uploadedFiles.length > 0 && (
+              <UploadedFilePreview files={uploadedFiles} />
+            )}
+          </>
         )}
         <div className="w-full max-w-3xl space-y-4">
           <div className="flex items-center space-x-2">
