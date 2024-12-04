@@ -106,19 +106,19 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] max-w-3xl mx-auto">
+    <div className="flex flex-col h-[calc(100vh-2rem)] w-full mx-auto">
       {isConversationStarted && (
-        <ScrollArea className="flex-grow mb-4 p-4 rounded-md border">
+        <ScrollArea className="flex-grow mb-4 p-4 rounded-md w-full lg:w-1/2 lg:mx-auto">
           {messages.map((message, index) => (
             <div
               key={index}
               className={`mb-4 ${message.isUser ? "text-right" : "text-left"}`}
             >
               <span
-                className={`inline-block p-2 rounded-lg ${
+                className={`inline-block px-3 py-2 whitespace-pre-wrap ${
                   message.isUser
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-800"
+                    ? "bg-blue-500 text-white rounded-tl-2xl rounded-tr-2xl rounded-br-lg rounded-bl-2xl"
+                    : "bg-gray-200 text-gray-800 rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-lg"
                 }`}
               >
                 {message.text}
@@ -134,6 +134,11 @@ export default function ChatInterface() {
           isConversationStarted ? "h-auto" : "flex-grow"
         }`}
       >
+        {!isConversationStarted && (
+          <h1 className="text-center text-4xl mb-8 font-bold text-gray-800">
+            Find your dream job in seconds
+          </h1>
+        )}
         <div className="w-full max-w-3xl space-y-4">
           <div className="flex items-center space-x-2">
             <FileUpload onFileUpload={handleFileUpload} />
@@ -154,7 +159,7 @@ export default function ChatInterface() {
             </Button>
           </div>
           {!isConversationStarted && (
-            <p className="text-center text-sm text-gray-500">
+            <p className="text-center text-sm text-gray-500 mt-8">
               AI Job Assistant is designed to help you find suitable internships
               and jobs. Start by uploading your resume or sending a message.
             </p>
