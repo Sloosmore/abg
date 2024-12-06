@@ -9,13 +9,23 @@ import JobList from "./job-list";
 import { Send } from "lucide-react";
 import UploadedFilePreview from "./uploaded-file-preview";
 
+const readFileContent = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+};
+
 export default function ChatInterface() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isConversationStarted, setIsConversationStarted] = useState(false);
   const [showJobList, setShowJobList] = useState(false);
   const [jobs, setJobs] = useState([]);
-  const [uploadedFiles, setUploadedFiles] = useState([]); // Initialize as an empty array
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [streamingMessage, setStreamingMessage] = useState("");
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -24,7 +34,7 @@ export default function ChatInterface() {
 
   useEffect(scrollToBottom, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputMessage.trim() || !isConversationStarted) {
       setMessages([
         ...messages,
@@ -33,36 +43,70 @@ export default function ChatInterface() {
       setInputMessage("");
       setIsConversationStarted(true);
 
-      // Send the message and uploaded files to the backend
-      if (uploadedFiles.length > 0) {
-        // Implement backend logic to handle the file data
-        console.log("Sending files:", uploadedFiles);
+      const fileContents = await Promise.all(
+        uploadedFiles.map(async (file) => {
+          const content = await readFileContent(file);
+          return { name: file.name, type: file.type, content };
+        })
+      );
+
+      const data = {
+        prompt: inputMessage,
+        files: fileContents,
+      };
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("Error:", error);
+        return;
       }
 
-      // Simulate AI response
-      setTimeout(() => {
-        if (!isConversationStarted) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              text: "Hello! I'm your AI Job Assistant. Upload your resume, and I'll help you find suitable internships and jobs.",
-              isUser: false,
-            },
-          ]);
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            {
-              text: "I've received your message. Please upload your resume so I can find suitable job opportunities for you.",
-              isUser: false,
-            },
-          ]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      const handleStreamedResponse = async (reader) => {
+        let done = false;
+        let message = "";
+
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          const chunkValue = decoder.decode(value);
+          const lines = chunkValue.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("0:")) {
+              const data = line.slice(3, -1);
+              message += data;
+              setStreamingMessage((prev) => prev + data);
+            } else if (line.startsWith("e:")) {
+              const json = JSON.parse(line.slice(2));
+              if (json.finishReason === "stop") {
+                setMessages((prev) => [
+                  ...prev,
+                  { text: message, isUser: false },
+                ]);
+                setStreamingMessage("");
+                message = "";
+              }
+            }
+          }
         }
-      }, 1000);
+      };
+
+      handleStreamedResponse(reader);
     }
   };
 
-  const handleFileUpload = (files) => {
+  const handleFileUpload = async (files) => {
     setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
 
     if (isConversationStarted) {
@@ -70,51 +114,6 @@ export default function ChatInterface() {
         ...prev,
         { text: `Uploaded ${files.length} file(s)`, isUser: true },
       ]);
-
-      // Simulate AI processing the resume and fetching job listings
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "I've analyzed your resume and found some suitable job opportunities. Here's a ranked list of jobs based on your skills and experience:",
-            isUser: false,
-          },
-        ]);
-        setShowJobList(true);
-        // Simulated job data
-        setJobs([
-          {
-            id: "1",
-            title: "Software Engineer",
-            company: "Tech Corp",
-            score: 95,
-          },
-          {
-            id: "2",
-            title: "Data Analyst",
-            company: "Data Insights Inc",
-            score: 88,
-          },
-          {
-            id: "3",
-            title: "UX Designer",
-            company: "Creative Solutions",
-            score: 82,
-          },
-          {
-            id: "4",
-            title: "Product Manager",
-            company: "Innovate Co",
-            score: 79,
-          },
-          {
-            id: "5",
-            title: "Frontend Developer",
-            company: "Web Wizards",
-            score: 75,
-          },
-        ]);
-      }, 2000);
     } else {
       setMessages((prev) => [
         ...prev,
@@ -146,6 +145,11 @@ export default function ChatInterface() {
               </span>
             </div>
           ))}
+          {streamingMessage && (
+            <div className="inline-block px-3 py-2 whitespace-pre-wrap bg-gray-200 text-gray-800 rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-lg">
+              {streamingMessage}
+            </div>
+          )}
           {showJobList && <JobList jobs={jobs} />}
           <div ref={messagesEndRef} />
         </ScrollArea>
