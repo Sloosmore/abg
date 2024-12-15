@@ -30,7 +30,6 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  serviceAccount: "projects/stringer-413718/serviceAccounts/stringer@stringer-413718.iam.gserviceaccount.com"
 
 images:
   - "gcr.io/stringer-413718/job-scraper"
