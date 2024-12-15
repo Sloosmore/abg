@@ -1,0 +1,36 @@
+steps:
+  # Build the container image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/stringer-413718/job-scraper",
+        "-f",
+        "scraper/Dockerfile",
+        "./scraper",
+      ]
+
+  # Push the container image to Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/stringer-413718/job-scraper"]
+
+  # Deploy container image to Cloud Run
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "job-scraper"
+      - "--image"
+      - "gcr.io/stringer-413718/job-scraper"
+      - "--region"
+      - "us-central1"
+      - "--platform"
+      - "managed"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  serviceAccount: "projects/stringer-413718/serviceAccounts/stringer-413718@stringer-413718.iam.gserviceaccount.com"
+
+images:
+  - "gcr.io/stringer-413718/job-scraper"
