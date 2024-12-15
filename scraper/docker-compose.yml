@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  scraper:
+    build: .
+    volumes:
+      - .:/app/scraper
+    env_file:
+      - .env
+    command: python main.py
