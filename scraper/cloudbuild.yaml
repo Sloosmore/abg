@@ -5,7 +5,7 @@ steps:
       [
         "build",
         "-t",
-        "gcr.io/stringer-413718/job-scraper",
+        "gcr.io/$PROJECT_ID/job-scraper",
         "-f",
         "scraper/Dockerfile",
         "./scraper",
@@ -13,10 +13,10 @@ steps:
 
   # Push the container image to Container Registry
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/stringer-413718/job-scraper"]
+    args: ["push", "gcr.io/$PROJECT_ID/job-scraper"]
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 images:
-  - "gcr.io/stringer-413718/job-scraper"
+  - "gcr.io/$PROJECT_ID/job-scraper"
