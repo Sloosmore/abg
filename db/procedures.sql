@@ -33,7 +33,7 @@ BEGIN
     j.experience_level,
     j.date_posted,
     (
-      -- Calculate weighted average of similarity scores
+      -- Calculates weighted average of similarity scores
       (1 - (j.description_embedding <=> input_description_embedding)) * 0.4 +
       (1 - (j.technical_skills_embedding <=> input_technical_skills_embedding)) * 0.4 +
       (1 - (j.soft_skills_embedding <=> input_soft_skills_embedding)) * 0.2

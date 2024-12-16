@@ -414,7 +414,7 @@ export default function ChatInterface() {
                   placeholder={
                     isConversationStarted
                       ? "Type your message..."
-                      : "Send a message to start the conversation..."
+                      : "Paste or type your resume to start the analysis..."
                   }
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
@@ -425,8 +425,14 @@ export default function ChatInterface() {
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Note: Only PDF files are supported
+              </p>
               {!isConversationStarted && (
-                <p className="text-center text-sm text-gray-500 mt-8">
+                <p
+                  style={{ marginTop: 8 }}
+                  className="text-center text-sm text-gray-500"
+                >
                   AI Job Assistant is designed to help you find suitable
                   internships and jobs. Start by uploading your resume or
                   sending a message.

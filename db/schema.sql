@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     technical_skills TEXT,
     experience_level TEXT,
     
-    -- Vector embeddings using pgvector (dimension 1536 for text-embedding-3-small)
+    -- Vector embeddings using pgvector 
+    -- (dimension 1536 for text-embedding-3-small)
     description_embedding vector(1536),
     soft_skills_embedding vector(1536),
     technical_skills_embedding vector(1536),
