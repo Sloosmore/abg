@@ -9,6 +9,42 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: {
+    opacity: 0,
+    y: 20,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+    },
+  },
+};
+
+const hoverVariants = {
+  hover: {
+    scale: 1.02,
+    boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)",
+    transition: {
+      duration: 0.2,
+    },
+  },
+};
 
 export default function JobList({ jobs, onCompanyClick }) {
   const formatDate = (dateString) => {
@@ -22,9 +58,20 @@ export default function JobList({ jobs, onCompanyClick }) {
   };
 
   return (
-    <div className="space-y-4">
+    <motion.div
+      className="space-y-4"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {jobs.map((job) => (
-        <div key={job.id} className="bg-white border rounded-lg p-4">
+        <motion.div
+          key={job.id}
+          variants={itemVariants}
+          whileHover="hover"
+          variants={hoverVariants}
+          className="bg-white border rounded-lg p-4"
+        >
           <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-2">
             <div className="flex-1 min-w-0 w-full">
               <h3 className="text-lg font-semibold break-words">{job.title}</h3>
@@ -103,8 +150,8 @@ export default function JobList({ jobs, onCompanyClick }) {
               Apply <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </div>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }

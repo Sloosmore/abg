@@ -8,7 +8,6 @@ import FileUpload from "./file-upload";
 import JobList from "./job-list";
 import { Send } from "lucide-react";
 import UploadedFilePreview from "./uploaded-file-preview";
-import axios from "axios";
 import LoadingSpinner from "./loading-spinner";
 import JobBoard from "./job-board";
 import ResumeDisplay from "./resume-display";
