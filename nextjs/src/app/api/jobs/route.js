@@ -70,9 +70,21 @@ export async function POST(req) {
     }
 
     // Sort jobs by similarity score
-    const sortedJobs = jobs.sort(
-      (a, b) => b.similarity_score - a.similarity_score
-    );
+    const sortedJobs = jobs
+      .sort((a, b) => b.similarity_score - a.similarity_score)
+      .map((job) => ({
+        id: job.id,
+        title: job.title,
+        company_name: job.company_name,
+        location: job.location,
+        application_url: job.application_url,
+        job_description: job.job_description,
+        technical_skills: job.technical_skills,
+        soft_skills: job.soft_skills,
+        experience_level: job.experience_level,
+        date_posted: job.date_posted,
+        similarity_score: job.similarity_score,
+      }));
 
     return NextResponse.json({ jobs: sortedJobs });
   } catch (error) {

@@ -28,7 +28,7 @@ export default function JobBoard({ jobs, isLoading }) {
 
   return (
     <div className="h-[calc(100vh-3rem)] shadow-lg rounded-lg overflow-hidden">
-      <div className="bg-white h-full p-6">
+      <div className="bg-white h-full p-4 sm:p-6">
         <h2 className="text-2xl font-bold mb-4">Matching Jobs</h2>
         <div className="mb-4">
           <CompanyFilter
@@ -37,7 +37,7 @@ export default function JobBoard({ jobs, isLoading }) {
           />
         </div>
         <ScrollArea className="h-[calc(100vh-12rem)]">
-          <div className="pb-4 pr-4">
+          <div className="pb-4 pr-2 sm:pr-4">
             {isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <LoadingSpinner />

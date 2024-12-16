@@ -250,6 +250,7 @@ export default function ChatInterface() {
                   technicalSkills: job.technical_skills,
                   softSkills: job.soft_skills,
                   experienceLevel: job.experience_level,
+                  date_posted: job.date_posted, // Make sure this is included
                   score: Math.round(job.similarity_score * 100),
                 }))
               );
@@ -314,7 +315,7 @@ export default function ChatInterface() {
         </div>
       ) : parsedData ? (
         <div className="flex flex-col h-full">
-          <div className="flex-grow grid grid-cols-2 gap-6 p-6">
+          <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
             <JobBoard jobs={jobs} isLoading={isLoading} />
             <ResumeDisplay parsedData={parsedData} />
           </div>
