@@ -41,24 +41,40 @@ export default function ChatInterface() {
   useEffect(scrollToBottom, [messages]);
 
   const handleSendMessage = async () => {
-    // Remove the trim() check since we want to allow empty string
     if (!isConversationStarted || inputMessage !== "") {
-      //const userMessage = inputMessage || "Please analyze this resume";
-      setMessages((prev) => [...prev, { text: userMessage, isUser: true }]);
+      const userMessage = inputMessage || "Please analyze this resume";
       setInputMessage("");
       setIsConversationStarted(true);
-      setStreamingMessage("");
+      setIsLoading(true);
+      setParsedData(null);
+      setJobs([]);
 
-      const fileContents = await Promise.all(
-        uploadedFiles.map(async (file) => {
-          const content = await readFileAsBase64(file);
-          return {
-            name: file.name,
-            type: file.type,
+      // Create a text file from the input message if no files are uploaded
+      let fileContents = [];
+      if (uploadedFiles.length === 0 && inputMessage) {
+        const textFile = new File([inputMessage], "resume.txt", {
+          type: "text/plain",
+        });
+        const content = await readFileAsBase64(textFile);
+        fileContents = [
+          {
+            name: "resume.txt",
+            type: "text/plain",
             content: content,
-          };
-        })
-      );
+          },
+        ];
+      } else {
+        fileContents = await Promise.all(
+          uploadedFiles.map(async (file) => {
+            const content = await readFileAsBase64(file);
+            return {
+              name: file.name,
+              type: file.type,
+              content: content,
+            };
+          })
+        );
+      }
 
       try {
         const response = await fetch("/api/chat", {
@@ -82,24 +98,65 @@ export default function ChatInterface() {
 
         while (true) {
           const { value, done } = await reader.read();
-          if (done) break;
+          if (done) {
+            try {
+              const jsonStr = streamedMessage
+                .split("\n")
+                .filter((line) => line.startsWith("data: "))
+                .map((line) => line.slice(6))
+                .join("");
 
+              const parsedData = JSON.parse(jsonStr);
+              setParsedData(parsedData);
+
+              // Fetch matching jobs
+              try {
+                const jobsResponse = await fetch("/api/jobs", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    description: parsedData.description,
+                    technical_skills: parsedData.technical_skills,
+                    soft_skills: parsedData.soft_skills,
+                  }),
+                });
+
+                if (!jobsResponse.ok) {
+                  throw new Error(`HTTP error! status: ${jobsResponse.status}`);
+                }
+
+                const { jobs: matchedJobs } = await jobsResponse.json();
+                setJobs(
+                  matchedJobs.map((job) => ({
+                    id: job.id,
+                    title: job.title,
+                    company: job.company_name,
+                    location: job.location,
+                    applicationUrl: job.application_url,
+                    description: job.job_description,
+                    technicalSkills: job.technical_skills,
+                    softSkills: job.soft_skills,
+                    experienceLevel: job.experience_level,
+                    score: Math.round(job.similarity_score * 100),
+                  }))
+                );
+              } catch (error) {
+                console.error("Error fetching matching jobs:", error);
+              }
+            } catch (error) {
+              console.error("Error parsing JSON:", error);
+            }
+            setIsLoading(false);
+            break;
+          }
           const chunk = decoder.decode(value);
           streamedMessage += chunk;
-          setStreamingMessage(streamedMessage);
         }
-
-        setMessages((prev) => [
-          ...prev,
-          { text: streamedMessage, isUser: false },
-        ]);
-        setStreamingMessage("");
       } catch (error) {
         console.error("Error sending message:", error);
-        setMessages((prev) => [
-          ...prev,
-          { text: `Error: ${error.message}`, isUser: false },
-        ]);
+        setIsLoading(false);
       }
     }
   };
@@ -256,9 +313,26 @@ export default function ChatInterface() {
           <LoadingSpinner />
         </div>
       ) : parsedData ? (
-        <div className="flex-grow grid grid-cols-2 gap-6 p-6">
-          <JobBoard jobs={jobs} isLoading={isLoading} />
-          <ResumeDisplay parsedData={parsedData} />
+        <div className="flex flex-col h-full">
+          <div className="flex-grow grid grid-cols-2 gap-6 p-6">
+            <JobBoard jobs={jobs} isLoading={isLoading} />
+            <ResumeDisplay parsedData={parsedData} />
+          </div>
+          <div
+            className="flex items-center gap-2 p-4 cursor-pointer hover:opacity-80 justify-center border-t"
+            onClick={() => {
+              setIsConversationStarted(false);
+              setParsedData(null);
+              setJobs([]);
+              setMessages([]);
+              setInputMessage("");
+              setUploadedFiles([]);
+            }}
+          >
+            <span className="text-blue-600 font-bold flex items-center">
+              ← Try another resume
+            </span>
+          </div>
         </div>
       ) : (
         <div className="flex flex-col h-full">
@@ -269,6 +343,11 @@ export default function ChatInterface() {
           >
             {!isConversationStarted && (
               <>
+                <img
+                  src="/HireWizard.png"
+                  alt="HireWizard Logo"
+                  className="mb-6 w-64"
+                />
                 <h1
                   className={`text-center text-4xl font-bold text-gray-800 ${
                     uploadedFiles.length > 0 ? "mb-2" : "mb-8"

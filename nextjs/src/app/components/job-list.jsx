@@ -17,24 +17,30 @@ export default function JobList({ jobs, onCompanyClick }) {
       {jobs.map((job) => (
         <div key={job.id} className="bg-white border rounded-lg p-4">
           <div className="flex justify-between items-start mb-2">
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold">{job.title}</h3>
-              <button
-                onClick={() => onCompanyClick(job.company)}
-                className="text-gray-600 hover:text-gray-900 hover:underline"
-              >
-                {job.company}
-              </button>
-              <span className="text-gray-600"> • {job.location}</span>
+              <div className="flex items-center">
+                <button
+                  onClick={() => onCompanyClick(job.company)}
+                  className="text-gray-600 hover:text-gray-900 hover:underline truncate"
+                >
+                  {job.company}
+                </button>
+                <span className="text-gray-600 mx-1">•</span>
+                <span className="text-gray-600 truncate">
+                  {job.location.replace(/<[^>]*>/g, "")}
+                </span>
+              </div>
             </div>
             <Badge
-              variant={
+              variant="default"
+              className={`text-white border-0 ml-4 whitespace-nowrap ${
                 job.score >= 90
-                  ? "success"
+                  ? "bg-gradient-to-r from-purple-900 to-blue-700"
                   : job.score >= 80
-                  ? "default"
-                  : "secondary"
-              }
+                  ? "bg-gradient-to-r from-purple-800 to-blue-600"
+                  : "bg-gradient-to-r from-purple-700 to-blue-500"
+              }`}
             >
               {job.score}% Match
             </Badge>
