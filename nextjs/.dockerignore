@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env*.local
+.gitignore
+README.md
+npm-debug.log
+Dockerfile
+.dockerignore
+docker-compose.yml
+.env
+# Allow .env.production
+!.env.production
