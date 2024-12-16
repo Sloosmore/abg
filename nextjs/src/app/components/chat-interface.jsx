@@ -8,6 +8,7 @@ import FileUpload from "./file-upload";
 import JobList from "./job-list";
 import { Send } from "lucide-react";
 import UploadedFilePreview from "./uploaded-file-preview";
+import axios from "axios";
 
 const readFileContent = (file) => {
   return new Promise((resolve, reject) => {
@@ -36,32 +37,92 @@ export default function ChatInterface() {
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() || !isConversationStarted) {
-      setMessages([
-        ...messages,
-        { text: inputMessage || "Hello", isUser: true },
-      ]);
+      const userMessage = inputMessage || "Please analyze this resume";
+      setMessages((prev) => [...prev, { text: userMessage, isUser: true }]);
       setInputMessage("");
       setIsConversationStarted(true);
+      setStreamingMessage("");
 
       const fileContents = await Promise.all(
         uploadedFiles.map(async (file) => {
-          const content = await readFileContent(file);
-          return { name: file.name, type: file.type, content };
+          const content = await readFileAsBase64(file);
+          return {
+            name: file.name,
+            type: file.type,
+            content: content,
+          };
         })
       );
 
-      const data = {
-        prompt: inputMessage,
-        files: fileContents,
-      };
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: userMessage,
+            files: fileContents,
+          }),
+        });
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let streamedMessage = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          streamedMessage += chunk;
+          setStreamingMessage(streamedMessage);
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          { text: streamedMessage, isUser: false },
+        ]);
+        setStreamingMessage("");
+      } catch (error) {
+        console.error("Error sending message:", error);
+        setMessages((prev) => [
+          ...prev,
+          { text: `Error: ${error.message}`, isUser: false },
+        ]);
+      }
+    }
+  };
+
+  const handleFileUpload = async (files) => {
+    setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
+
+    const fileContents = await Promise.all(
+      Array.from(files).map(async (file) => {
+        const content = await readFileAsBase64(file);
+        return {
+          name: file.name,
+          type: file.type,
+          content: content,
+        };
+      })
+    );
+
+    try {
+      // Modified this part
+      const response = await axios.post(
+        "/api/chat",
+        { files: fileContents },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         const error = await response.text();
@@ -103,26 +164,31 @@ export default function ChatInterface() {
       };
 
       handleStreamedResponse(reader);
-    }
-  };
-
-  const handleFileUpload = async (files) => {
-    setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
-
-    if (isConversationStarted) {
-      setMessages((prev) => [
-        ...prev,
-        { text: `Uploaded ${files.length} file(s)`, isUser: true },
-      ]);
-    } else {
+    } catch (error) {
+      console.error("Error uploading files:", error);
       setMessages((prev) => [
         ...prev,
         {
-          text: `${files.length} file(s) uploaded. Please start the conversation to proceed.`,
+          text: `Error uploading files: ${error.message}`,
           isUser: false,
         },
       ]);
     }
+  };
+
+  // Helper function to read file as base64
+  const readFileAsBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result
+          .replace("data:", "")
+          .replace(/^.+,/, "");
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   return (
