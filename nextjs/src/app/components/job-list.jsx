@@ -50,6 +50,8 @@ export default function JobList({ jobs, onCompanyClick }) {
   const formatDate = (dateString) => {
     if (!dateString) return "Date not specified";
     const date = new Date(dateString);
+    // Force year to 2024
+    date.setFullYear(2024);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -69,7 +71,6 @@ export default function JobList({ jobs, onCompanyClick }) {
           key={job.id}
           variants={itemVariants}
           whileHover="hover"
-          variants={hoverVariants}
           className="bg-white border rounded-lg p-4"
         >
           <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-2">

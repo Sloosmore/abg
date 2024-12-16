@@ -51,7 +51,7 @@ export default function CompanyFilter({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-0">
       <Command className="rounded-lg border shadow-[0_0_10px_rgba(0,0,0,0.1)]">
         <Command.Input
           placeholder="Search companies..."
