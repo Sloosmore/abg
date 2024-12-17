@@ -69,7 +69,10 @@ export default function JobList({ jobs, onCompanyClick }) {
       {jobs.map((job) => (
         <motion.div
           key={job.id}
-          variants={itemVariants}
+          variants={{
+            ...itemVariants,
+            ...hoverVariants,
+          }}
           whileHover="hover"
           className="bg-white border rounded-lg p-4"
         >
